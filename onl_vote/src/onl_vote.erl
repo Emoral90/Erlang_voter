@@ -1,15 +1,12 @@
 -module(onl_vote).
 -export([start/0, register_voter/2, cast_vote/3, registered_voters/1, candidates/1, votes/1, tally_votes/0]).
 
-% -record(voter, {id, name}).
-% -record(candidate, {id, name}).
-
 % Initiate voting system Pid's
 start()->
     Registered_voters_Pid = spawn(?MODULE, registered_voters, [[]]),
     Candidate_id_Pid = spawn(?MODULE, candidates, [[]]),
     Votes_Pid = spawn(?MODULE, votes, [[]]),
-    ok.
+    {Registered_voters_Pid, Candidate_id_Pid, Votes_Pid}.
 
 % Generate unique voter ID
 register_voter(Registered_voters_Pid, Voter_name)->
@@ -63,6 +60,6 @@ votes(Votes)->
 
 % Count votes and return the results
 tally_votes()->
-    
+
     io:format("Tallying votes...~n"),
     ok.
