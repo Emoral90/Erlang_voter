@@ -1,25 +1,29 @@
 -module(onl_vote).
 -export([start/0, register_voter/2, cast_vote/3, registered_voters/1, candidates/1, votes/1, tally_votes/0]).
 
+
+% Server Functions
+
 % Initiate voting system Pid's
 start()->
-    Registered_voters_Pid = spawn(?MODULE, registered_voters, [[]]),
-    Candidate_id_Pid = spawn(?MODULE, candidates, [[]]),
-    Votes_Pid = spawn(?MODULE, votes, [[]]),
-    {Registered_voters_Pid, Candidate_id_Pid, Votes_Pid}.
+    Registered_voters_pid = spawn(?MODULE, registered_voters, [[]]),
+    Candidate_id_pid = spawn(?MODULE, candidates, [[]]),
+    Votes_pid = spawn(?MODULE, votes, [[]]),
+    {Registered_voters_pid, Candidate_id_pid, Votes_pid}.
 
 % Generate unique voter ID
-register_voter(Registered_voters_Pid, Voter_name)->
-    Registered_voters_Pid ! {self(), {register_voter, Voter_name}},
+register_voter(Registered_voters_pid, Voter_name)->
+    Registered_voters_pid ! {self(), {register_voter, Voter_name}},
     receive
-        {Registered_voters_Pid, Voter_id}->
+        {Registered_voters_pid, Voter_id}->
             {ok, Voter_id}
     end.
 
 % Add vote to list of votes
-cast_vote(Voter_id, Candidate_id, Votes_Pid)->
-    Votes_Pid ! {self(), {cast_vote, Voter_id, Candidate_id}},
+cast_vote(Voter_id, Candidate_id, Votes_pid)->
+    Votes_pid ! {self(), {cast_vote, Voter_id, Candidate_id}},
     ok.
+
 
 % Client functions
 
