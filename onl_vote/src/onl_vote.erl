@@ -1,14 +1,15 @@
 -module(onl_vote).
--export([start/0]).
+-export([start/0, register_voter/2, cast_vote/3, registered_voters/1, candidates/1, votes/1, tally_votes/0]).
 
--record(voter, {id, name}).
--record(candidate, {id, name}).
+% -record(voter, {id, name}).
+% -record(candidate, {id, name}).
 
 % Initiate voting system Pid's
 start()->
     Registered_voters_Pid = spawn(?MODULE, registered_voters, [[]]),
     Candidate_id_Pid = spawn(?MODULE, candidates, [[]]),
     Votes_Pid = spawn(?MODULE, votes, [[]]),
+    ok.
 
 % Generate unique voter ID
 register_voter(Registered_voters_Pid, Voter_name)->
@@ -20,11 +21,8 @@ register_voter(Registered_voters_Pid, Voter_name)->
 
 % Add vote to list of votes
 cast_vote(Voter_id, Candidate_id, Votes_Pid)->
-    Votes_Pid ! {self(), tally_votes},
-    receive
-        {Votes_Pid, Result}->
-            Result
-    end.
+    Votes_Pid ! {self(), {cast_vote, Voter_id, Candidate_id}},
+    ok.
 
 % Client functions
 
@@ -33,10 +31,10 @@ registered_voters(Registered_voters)->
         {From, {register_voter, Voter_name}}->
             Voter_id = make_ref(),
             New_reg_voters = [{Voter_id, Voter_name} | Registered_voters],
-            From ! {selft(), Voter_id},
+            From ! {self(), Voter_id},
             registered_voters(New_reg_voters);
         _->
-            registered_voters(Registered_voters);
+            registered_voters(Registered_voters)
     end.
 
 candidates(Candidates)->
@@ -58,11 +56,13 @@ votes(Votes)->
             From ! ok,
             votes(New_votes);
         {From, tally_votes}->
-            Total = tally_votes(Votes),
+            Total = tally_votes(),
+            From ! {self(), Total},
             votes(Votes)
     end.
 
 % Count votes and return the results
 tally_votes()->
+    
     io:format("Tallying votes...~n"),
     ok.
