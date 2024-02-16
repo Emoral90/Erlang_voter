@@ -20,3 +20,7 @@ handle_voting(VotePid)->
             onl_vote:cast_vote(VotePid, Option),
             handle_voting(VotePid)
     end.
+
+read_line()->
+    {ok, Data} = io:get_line(""),
+    string:trim(Data).
