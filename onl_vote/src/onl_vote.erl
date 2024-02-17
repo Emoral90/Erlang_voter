@@ -112,4 +112,4 @@ tally_votes(Votes)->
 % onl_vote:cast_vote(Voter_id_Erick, Candidate_id_Karl_Benz, Votes_pid).
 % onl_vote:cast_vote(Voter_id_Bryan, Candidate_id_Henry_Ford, Votes_pid).
 % 
-% 
+% onl_vote:tally_votes(Votes).
