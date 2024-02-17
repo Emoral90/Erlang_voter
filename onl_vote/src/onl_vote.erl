@@ -47,6 +47,17 @@ registered_voters(Registered_voters)->
             registered_voters(Registered_voters)
     end.
 
+registered_candidates(Registered_candidates)->
+    receive
+        {From, {register_candidate, Candidate_name}}->
+            Candidate_id = make_ref(),
+            New_reg_cands = [{Candidate_id, Candidate_name} | Registered_candidates],
+            From ! {self(), Candidate_id},
+            Registered_candidates(New_reg_cands);
+        _->
+            Registered_candidates(Registered_candidates)
+    end.
+
 candidates(Candidates)->
     receive
         {From, {register_candidate, Candidate_name}}->
@@ -66,16 +77,19 @@ votes(Votes)->
             From ! ok,
             votes(New_votes);
         {From, tally_votes}->
-            Total = tally_votes(),
+            Total = tally_votes(Votes),
             From ! {self(), Total},
             votes(Votes)
     end.
 
 % Count votes and return the results
 tally_votes(Votes)->
-    Vote_count = lists:foldl(fun({_, Candidate_id}, Acc))->
-        lists:keyreplace(Candidate_id, 1, Acc, {Candidate_id, 1});
-    (_, Acc)-> Accend, dict:new(), Votes,
+    Vote_count = lists:foldl(
+        fun({_, CandidateId}, Acc) ->
+            lists:keyreplace(CandidateId, 1, Acc, {CandidateId, 1})
+        end,
+        dict:new(),
+        Votes),
     io:format("Vote count: ~p~n", [dict:to_list(Vote_count)]).
 
 
