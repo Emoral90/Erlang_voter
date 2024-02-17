@@ -1,5 +1,5 @@
 -module(onl_vote).
--export([start/0, register_voter/2, register_candidate/2, cast_vote/3, registered_voters/1, candidates/1, votes/1, tally_votes/1]).
+-export([start/0, register_voter/2, register_candidate/2, cast_vote/3, registered_voters/1, registered_candidates/1, candidates/1, votes/1, tally_votes/1]).
 
 
 % Initiate voting system Pid's
@@ -67,7 +67,10 @@ candidates(Candidates)->
             candidates(New_cands);
         {From, get_candidates}->
             From ! {self(), Candidates},
-            candidates(Candidates)
+            candidates(Candidates);
+        {timeout, _}->
+            io:format("Received unexpected message or timeout~n"),
+            candidates(Candidates) 
     end.
 
 votes(Votes)->
@@ -79,6 +82,9 @@ votes(Votes)->
         {From, tally_votes}->
             Total = tally_votes(Votes),
             From ! {self(), Total},
+            votes(Votes);
+        {timeout, _}->
+            io:format("Received unexpected message or timeout~n"),
             votes(Votes)
     end.
 
@@ -94,5 +100,16 @@ tally_votes(Votes)->
 
 
 % {Voters_pid, Candidate_pid, Votes_pid} = onl_vote:start().
+% 
 % onl_vote:register_voter(Voters_pid, "Abby").
+% onl_vote:register_voter(Voters_pid, "Bryan").
+% onl_vote:register_voter(Voters_pid, "Erick").
+% 
+% onl_vote:register_candidate(Candidate_pid, "Karl Benz").
+% onl_vote:register_candidate(Candidate_pid, "Henry Ford").
+% 
+% onl_vote:cast_vote(Voter_id_Abby, Candidate_id_Henry_Ford, Votes_pid).
+% onl_vote:cast_vote(Voter_id_Erick, Candidate_id_Karl_Benz, Votes_pid).
+% onl_vote:cast_vote(Voter_id_Bryan, Candidate_id_Henry_Ford, Votes_pid).
+% 
 % 
