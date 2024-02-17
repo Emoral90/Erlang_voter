@@ -1,22 +1,31 @@
 -module(onl_vote).
--export([start/0, register_voter/2, cast_vote/3, registered_voters/1, candidates/1, votes/1, tally_votes/0]).
+-export([start/0, register_voter/2, register_candidate/2, cast_vote/3, registered_voters/1, candidates/1, votes/1, tally_votes/1]).
 
-
-% Server Functions
 
 % Initiate voting system Pid's
 start()->
-    Registered_voters_pid = spawn(?MODULE, registered_voters, [[]]),
-    Candidate_id_pid = spawn(?MODULE, candidates, [[]]),
+    Voter_pid = spawn(?MODULE, registered_voters, [[]]),
+    Candidate_pid = spawn(?MODULE, candidates, [[]]),
     Votes_pid = spawn(?MODULE, votes, [[]]),
-    {Registered_voters_pid, Candidate_id_pid, Votes_pid}.
+    {Voter_pid, Candidate_pid, Votes_pid}.
+
+
+% Client Functions
 
 % Generate unique voter ID
-register_voter(Registered_voters_pid, Voter_name)->
-    Registered_voters_pid ! {self(), {register_voter, Voter_name}},
+register_voter(Voter_pid, Voter_name)->
+    Voter_pid ! {self(), {register_voter, Voter_name}},
     receive
-        {Registered_voters_pid, Voter_id}->
+        {Voter_pid, Voter_id}->
             {ok, Voter_id}
+    end.
+
+% Generate unique candidate ID
+register_candidate(Candidate_pid, Candidate_name)->
+    Candidate_pid ! {self(), {register_voter, Candidate_name}},
+    receive
+        {Candidate_pid, Candidate_id}->
+            {ok, Candidate_id}
     end.
 
 % Add vote to list of votes
@@ -25,7 +34,7 @@ cast_vote(Voter_id, Candidate_id, Votes_pid)->
     ok.
 
 
-% Client functions
+% Server functions
 
 registered_voters(Registered_voters)->
     receive
@@ -40,7 +49,7 @@ registered_voters(Registered_voters)->
 
 candidates(Candidates)->
     receive
-        {From, {add_candidate, Candidate_name}}->
+        {From, {register_candidate, Candidate_name}}->
             Candidate_id = make_ref(),
             New_cands = [{Candidate_id, Candidate_name} | Candidates],
             From ! {self(), Candidate_id},
@@ -63,7 +72,13 @@ votes(Votes)->
     end.
 
 % Count votes and return the results
-tally_votes()->
+tally_votes(Votes)->
+    Vote_count = lists:foldl(fun({_, Candidate_id}, Acc))->
+        lists:keyreplace(Candidate_id, 1, Acc, {Candidate_id, 1});
+    (_, Acc)-> Accend, dict:new(), Votes,
+    io:format("Vote count: ~p~n", [dict:to_list(Vote_count)]).
 
-    io:format("Tallying votes...~n"),
-    ok.
+
+% {Voters_pid, Candidate_pid, Votes_pid} = onl_vote:start().
+% onl_vote:register_voter(Voters_pid, "Abby").
+% 
